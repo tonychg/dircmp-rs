@@ -1,0 +1,13 @@
+[package]
+name = "dircmp-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+jwalk = "0.8.1"
+clap = {version = "4.4.11", features = ["derive"]}
+ulid = "1.1.0"
+log = "0.4.20"
+env_logger = "0.10.1"
+rayon = "1.8.0"
+num_cpus = "1.16.0"
