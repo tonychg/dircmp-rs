@@ -29,7 +29,7 @@
         };
 
         packages.default = pkgs.rustPlatform.buildRustPackage rec {
-          name = "backupdiff";
+          name = "dircmp-rs";
 
           src = ./.;
 

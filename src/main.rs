@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use log::{debug, info};
@@ -37,15 +38,28 @@ impl Index {
     }
 }
 
-fn construct_index(path: &str) -> Index {
+fn is_excluded(path: &Path, exclude: &Vec<String>) -> bool {
+    for portion in path.iter() {
+        if let Some(name) = portion.to_str() {
+            if exclude.contains(&name.to_string()) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+fn construct_index(path: &str, exclude: &Vec<String>) -> Index {
     let mut index = Index::new();
 
     info!("Start indexing {}", path);
 
-    for entry in WalkDir::new(path).sort(true) {
+    for entry in WalkDir::new(path).sort(true).skip_hidden(false) {
         if let Ok(entry) = entry {
             if let Ok(striped_entry) = entry.path().strip_prefix(path) {
-                index.add(&striped_entry.display().to_string());
+                if !is_excluded(striped_entry, exclude) {
+                    index.add(&striped_entry.display().to_string());
+                }
             }
         }
     }
@@ -67,9 +81,9 @@ fn diff_chunk(chunk: &[String], target: &Index) -> Vec<String> {
     return processed_result;
 }
 
-fn diff(source: &str, target: &str) -> Index {
-    let source = construct_index(source);
-    let target = construct_index(target);
+fn diff(source: &str, target: &str, exclude: &Vec<String>) -> Index {
+    let source = construct_index(source, exclude);
+    let target = construct_index(target, &vec![]);
     let result = Arc::new(Mutex::new(Vec::new()));
 
     info!("Starting to diff");
@@ -113,7 +127,7 @@ fn main() {
     info!("source: {}", cli.source);
     info!("target: {}", cli.target);
 
-    let result = diff(&cli.source, &cli.target);
+    let result = diff(&cli.source, &cli.target, &cli.exclude);
 
     info!(
         "{} of files in {} and not in {}",
